@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import pandas as pd
 from datetime import datetime, timezone, timedelta
 
 st.set_page_config(page_title="Consulta de Pontos Tangerino", layout="wide")
@@ -48,26 +49,50 @@ if st.button("🔍 Buscar Pontos"):
 
     url = f"{BASE_URL}/"
 
-    st.write("### URL da Requisição")
+    st.write("### 🔗 URL da Requisição")
     st.code(url)
 
-    st.write("### Parâmetros Enviados")
+    st.write("### 📦 Parâmetros Enviados")
     st.json(params)
 
     try:
         response = requests.get(url, headers=HEADERS, params=params, timeout=30)
 
-        st.write("### Status")
+        st.write("### 📡 Status")
         st.success(response.status_code) if response.status_code == 200 else st.error(response.status_code)
 
-        st.write("### Headers")
+        st.write("### 📋 Headers")
         st.json(dict(response.headers))
 
-        st.write("### Resposta")
-        if response.text:
-            st.code(response.text)
+        if response.status_code == 200 and response.text:
+            data = response.json()
+
+            st.write("### 🧾 JSON Bruto")
+            st.json(data)
+
+            # 🔥 Tentativa de transformar em tabela
+            st.write("### 📊 Visualização em Tabela")
+
+            # A API geralmente retorna lista direto ou dentro de "content"
+            if isinstance(data, list):
+                df = pd.DataFrame(data)
+
+            elif isinstance(data, dict):
+                if "content" in data and isinstance(data["content"], list):
+                    df = pd.DataFrame(data["content"])
+                else:
+                    # transforma dict único em tabela de 1 linha
+                    df = pd.DataFrame([data])
+            else:
+                df = pd.DataFrame()
+
+            if not df.empty:
+                st.dataframe(df, use_container_width=True)
+            else:
+                st.info("Não foi possível estruturar os dados em tabela automaticamente.")
+
         else:
-            st.info("Resposta vazia")
+            st.info("Resposta vazia ou erro retornado pela API.")
 
     except Exception as e:
         st.error(f"Erro na requisição: {e}")
