@@ -123,8 +123,9 @@ with tab1:
             return datetime(d.year, d.month, d.day, 12, 0, 0).strftime("%Y-%m-%d")
 
         params = {
-            "startDate": format_date_safe(start_date),
-            "endDate": format_date_safe(end_date)
+            "startDate": start_date.strftime("%Y-%m-%dT00:00:00"),
+            "endDate": end_date.strftime("%Y-%m-%dT23:59:59"),
+            "size": 50  # opcional mas ajuda
         }
         
         if employee_id:
