@@ -116,9 +116,15 @@ with tab1:
         selected_endpoint = endpoint_map[endpoint_get]
         
         # Construir parâmetros
+        from datetime import datetime
+
+        def format_date_safe(d):
+            # força meio-dia para evitar virar o dia no UTC
+            return datetime(d.year, d.month, d.day, 12, 0, 0).strftime("%Y-%m-%d")
+
         params = {
-            "startDate": start_date.strftime("%Y-%m-%d"),
-            "endDate": end_date.strftime("%Y-%m-%d")
+            "startDate": format_date_safe(start_date),
+            "endDate": format_date_safe(end_date)
         }
         
         if employee_id:
