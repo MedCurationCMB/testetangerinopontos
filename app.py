@@ -14,7 +14,7 @@ url = f"https://apis.tangerino.com.br/punch/?adjustment=true&size=50&startDate={
 
 headers = {
     "accept": "application/json;charset=UTF-8",
-    "Authorization": "Authorization: Basic YzM1MDM5MDEyNThhNGU3MGIyYmM4ZjA0NWU0ZTAyYWY6MzE3MmU3M2Y0YTQ2NDliNmE0ZTJhYzFlMjViN2JhMGU="
+    "Authorization": st.secrets["TANGERINO_AUTH"]
 }
 
 st.write("URL usada:")
