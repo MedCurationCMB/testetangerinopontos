@@ -10,7 +10,7 @@ url = "https://apis.tangerino.com.br/punch"
 # Headers incluindo User-Agent
 headers = {
     "accept": "application/json;charset=UTF-8",
-    "Authorization": f"Basic {st.secrets['TANGERINO_AUTH']}",  # Formato correto: Basic token
+    "Authorization": st.secrets["TANGERINO_AUTH"],
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                   "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 }
@@ -38,18 +38,14 @@ if st.button("Testar endpoint"):
     start_timestamp = int(start_datetime.timestamp() * 1000)
     end_timestamp = int(end_datetime.timestamp() * 1000)
     
-    # Parâmetros de query
-    params = {
-        "startDate": start_timestamp,
-        "endDate": end_timestamp
-    }
+    # Adicionar parâmetros na URL diretamente
+    url_with_params = f"{url}?startDate={start_timestamp}&endDate={end_timestamp}"
     
-    st.write(f"startDate (ms): {start_timestamp}")
-    st.write(f"endDate (ms): {end_timestamp}")
+    st.write(f"URL: {url_with_params}")
     
     try:
-        # Fazendo request GET com parâmetros
-        response = requests.get(url, headers=headers, params=params, timeout=20)
+        # Fazendo request GET SEM params no método, direto na URL
+        response = requests.get(url_with_params, headers=headers, timeout=20)
     except Exception as e:
         st.error(e)
         st.stop()
