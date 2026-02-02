@@ -2,56 +2,55 @@ import streamlit as st
 import requests
 from datetime import datetime
 
-st.title("🕒 Tangerino – Punch por Período (Admin)")
+st.title("🔎 Teste de Consulta de Pontos — Tangerino API")
 
-data_inicio = st.date_input("Data início")
-data_fim = st.date_input("Data fim")
+# Inputs de datas
+data_inicio = st.date_input("Data Início")
+data_fim = st.date_input("Data Fim")
 
-BASE_URL = "https://apis.tangerino.com.br/punch"
+st.write("Selecione o intervalo de datas para consulta de pontos.")
 
+# URL base da API
+BASE_URL = "https://api.tangerino.com.br/punch"
+
+# Headers incluindo User-Agent e Authorization
 headers = {
     "accept": "application/json;charset=UTF-8",
-    "Authorization": st.secrets["TANGERINO_AUTH"]
+    "Authorization": st.secrets["TANGERINO_AUTH"],
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    )
 }
 
-def to_millis(date_obj, end=False):
-    if end:
-        dt = datetime.combine(date_obj, datetime.max.time())
-    else:
-        dt = datetime.combine(date_obj, datetime.min.time())
-    return int(dt.timestamp() * 1000)
-
-if st.button("📡 Consultar"):
+if st.button("📡 Consultar Pontos"):
+    # Validar intervalo de datas
     if data_inicio > data_fim:
-        st.error("Data início maior que data fim")
-        st.stop()
-
-    params = {
-        "startDate": to_millis(data_inicio),
-        "endDate": to_millis(data_fim),
-        "size": 1000,           # evita paginação inicial
-        "adjustment": "true"    # padrão usado no swagger
-    }
-
-    st.write("📤 Params:", params)
-
-    try:
-        response = requests.get(
-            BASE_URL,
-            headers=headers,
-            params=params,
-            timeout=30
-        )
-    except Exception as e:
-        st.error(e)
-        st.stop()
-
-    st.write("📊 Status:", response.status_code)
-    st.write("🔗 URL:", response.url)
-
-    if response.status_code == 200:
-        st.success("✔ Dados retornados")
-        st.json(response.json())
+        st.error("❌ A data de início não pode ser posterior à data de fim.")
     else:
-        st.error("Erro na requisição")
-        st.code(response.text)
+        st.info("Fazendo request para o endpoint de pontos...")
+
+        # Converter datas para ISO 8601 (ex: 2026-02-01T00:00:00Z)
+        start_iso = datetime.combine(data_inicio, datetime.min.time()).isoformat() + "Z"
+        end_iso = datetime.combine(data_fim, datetime.max.time()).isoformat() + "Z"
+
+        params = {
+            "startDate": start_iso,
+            "endDate": end_iso
+        }
+
+        try:
+            response = requests.get(BASE_URL, headers=headers, params=params, timeout=30)
+        except Exception as e:
+            st.error(f"Erro ao conectar: {e}")
+            st.stop()
+
+        # Mostrar resultado
+        st.write("📊 Status:", response.status_code)
+        st.write("📦 URL chamada:", response.url)
+        st.code(response.text if response.text else "(nenhum conteúdo retornado)")
+
+        if response.status_code == 200:
+            st.success("✔️ Requisição bem-sucedida!")
+        else:
+            st.warning("⚠️ Houve um problema na requisição.")
