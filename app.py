@@ -11,7 +11,7 @@ data_fim = st.date_input("Data Fim")
 st.write("Selecione o intervalo de datas para consulta de pontos.")
 
 # URL base da API
-BASE_URL = "https://api.tangerino.com.br/punch"
+BASE_URL = "https://apis.tangerino.com.br/punch"
 
 # Headers incluindo User-Agent e Authorization
 headers = {
