@@ -31,11 +31,21 @@ with col2:
 if st.button("Testar endpoint"):
     st.write("Fazendo request...")
     
+    # Converter datas para timestamp em milissegundos
+    start_datetime = datetime.combine(start_date, datetime.min.time())
+    end_datetime = datetime.combine(end_date, datetime.max.time())
+    
+    start_timestamp = int(start_datetime.timestamp() * 1000)
+    end_timestamp = int(end_datetime.timestamp() * 1000)
+    
     # Parâmetros de query
     params = {
-        "startDate": start_date.strftime("%Y-%m-%d"),
-        "endDate": end_date.strftime("%Y-%m-%d")
+        "startDate": start_timestamp,
+        "endDate": end_timestamp
     }
+    
+    st.write(f"startDate (ms): {start_timestamp}")
+    st.write(f"endDate (ms): {end_timestamp}")
     
     try:
         # Fazendo request GET com parâmetros
