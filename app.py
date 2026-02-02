@@ -1,73 +1,56 @@
 import streamlit as st
 import requests
-from datetime import datetime, timezone, timedelta
+from datetime import datetime
 
-st.set_page_config(page_title="Consulta de Pontos Tangerino", layout="wide")
-st.title("📊 Consulta de Pontos - Tangerino (API Legacy)")
+st.title("🔎 Teste de Consulta de Pontos — Tangerino API")
 
-BASE_URL = "https://apis.tangerino.com.br/punch"
+# Inputs de datas
+data_inicio = st.date_input("Data Início")
+data_fim = st.date_input("Data Fim")
 
-HEADERS = {
+st.write("Selecione o intervalo de datas para consulta de pontos.")
+
+# URL base da API
+BASE_URL = "https://api.tangerino.com.br/punch"
+
+# Headers incluindo User-Agent e Authorization
+headers = {
     "accept": "application/json;charset=UTF-8",
-    "Authorization": st.secrets["TANGERINO_AUTH"]
+    "Authorization": st.secrets["TANGERINO_AUTH"],
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    )
 }
 
-# 🔧 Converte data para timestamp em milissegundos
-def to_millis(date_obj, end_of_day=False):
-    if end_of_day:
-        dt = datetime(date_obj.year, date_obj.month, date_obj.day, 23, 59, 59, tzinfo=timezone.utc)
+if st.button("📡 Consultar Pontos"):
+    # Validar intervalo de datas
+    if data_inicio > data_fim:
+        st.error("❌ A data de início não pode ser posterior à data de fim.")
     else:
-        dt = datetime(date_obj.year, date_obj.month, date_obj.day, 0, 0, 0, tzinfo=timezone.utc)
-    return int(dt.timestamp() * 1000)
+        st.info("Fazendo request para o endpoint de pontos...")
 
-st.header("Filtrar por Período")
+        # Converter datas para ISO 8601 (ex: 2026-02-01T00:00:00Z)
+        start_iso = datetime.combine(data_inicio, datetime.min.time()).isoformat() + "Z"
+        end_iso = datetime.combine(data_fim, datetime.max.time()).isoformat() + "Z"
 
-col1, col2, col3 = st.columns(3)
+        params = {
+            "startDate": start_iso,
+            "endDate": end_iso
+        }
 
-with col1:
-    start_date = st.date_input("Data Inicial", datetime.now() - timedelta(days=1))
+        try:
+            response = requests.get(BASE_URL, headers=headers, params=params, timeout=30)
+        except Exception as e:
+            st.error(f"Erro ao conectar: {e}")
+            st.stop()
 
-with col2:
-    end_date = st.date_input("Data Final", datetime.now())
+        # Mostrar resultado
+        st.write("📊 Status:", response.status_code)
+        st.write("📦 URL chamada:", response.url)
+        st.code(response.text if response.text else "(nenhum conteúdo retornado)")
 
-with col3:
-    size = st.number_input("Qtd. Registros", value=50, min_value=1)
-
-employee_id = st.text_input("Employee ID (opcional)")
-
-if st.button("🔍 Buscar Pontos"):
-    params = {
-        "startDate": to_millis(start_date),
-        "endDate": to_millis(end_date, end_of_day=True),
-        "size": size,
-        "adjustment": "true"
-    }
-
-    if employee_id:
-        params["employeeId"] = employee_id
-
-    url = f"{BASE_URL}/"
-
-    st.write("### URL da Requisição")
-    st.code(url)
-
-    st.write("### Parâmetros Enviados")
-    st.json(params)
-
-    try:
-        response = requests.get(url, headers=HEADERS, params=params, timeout=30)
-
-        st.write("### Status")
-        st.success(response.status_code) if response.status_code == 200 else st.error(response.status_code)
-
-        st.write("### Headers")
-        st.json(dict(response.headers))
-
-        st.write("### Resposta")
-        if response.text:
-            st.code(response.text)
+        if response.status_code == 200:
+            st.success("✔️ Requisição bem-sucedida!")
         else:
-            st.info("Resposta vazia")
-
-    except Exception as e:
-        st.error(f"Erro na requisição: {e}")
+            st.warning("⚠️ Houve um problema na requisição.")
