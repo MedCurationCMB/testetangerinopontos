@@ -2,43 +2,37 @@ import streamlit as st
 import requests
 from datetime import datetime
 
-st.title("🕒 Tangerino – Consulta de Pontos")
+st.title("🕒 Tangerino – Punch por Período (Admin)")
 
-employee_id = st.text_input("Employee ID", placeholder="Ex: 5097128")
 data_inicio = st.date_input("Data início")
 data_fim = st.date_input("Data fim")
 
-BASE_URL = "https://apis.tangerino.com.br/punch/daily-summary"
+BASE_URL = "https://apis.tangerino.com.br/punch"
 
 headers = {
     "accept": "application/json;charset=UTF-8",
-    "Authorization": st.secrets["TANGERINO_AUTH"],
+    "Authorization": st.secrets["TANGERINO_AUTH"]
 }
 
-def to_millis(dt, end_of_day=False):
-    if end_of_day:
-        dt = datetime.combine(dt, datetime.max.time())
+def to_millis(date_obj, end=False):
+    if end:
+        dt = datetime.combine(date_obj, datetime.max.time())
     else:
-        dt = datetime.combine(dt, datetime.min.time())
+        dt = datetime.combine(date_obj, datetime.min.time())
     return int(dt.timestamp() * 1000)
 
 if st.button("📡 Consultar"):
-    if not employee_id:
-        st.error("Informe o employeeId")
-        st.stop()
-
     if data_inicio > data_fim:
         st.error("Data início maior que data fim")
         st.stop()
 
     params = {
-        "employeeId": employee_id,
         "startDate": to_millis(data_inicio),
         "endDate": to_millis(data_fim),
-        "reprocess": "false"
+        "size": 1000,           # evita paginação inicial
+        "adjustment": "true"    # padrão usado no swagger
     }
 
-    st.write("🔗 URL:", BASE_URL)
     st.write("📤 Params:", params)
 
     try:
@@ -53,9 +47,10 @@ if st.button("📡 Consultar"):
         st.stop()
 
     st.write("📊 Status:", response.status_code)
+    st.write("🔗 URL:", response.url)
 
     if response.status_code == 200:
-        st.success("Requisição OK")
+        st.success("✔ Dados retornados")
         st.json(response.json())
     else:
         st.error("Erro na requisição")
