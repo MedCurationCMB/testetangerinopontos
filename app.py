@@ -1,57 +1,29 @@
 import streamlit as st
 import requests
-from datetime import datetime
 
-st.title("🕒 Tangerino – Punch por Período (Admin)")
+st.title("Teste Tangerino /test")
 
-data_inicio = st.date_input("Data início")
-data_fim = st.date_input("Data fim")
+# URL corrigida com barra no final
+url = "https://apis.tangerino.com.br/punch"
 
-BASE_URL = "https://apis.tangerino.com.br/punch"
-
+# Headers incluindo User-Agent
 headers = {
     "accept": "application/json;charset=UTF-8",
-    "Authorization": st.secrets["TANGERINO_AUTH"]
+    "Authorization": st.secrets["TANGERINO_AUTH"],
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                  "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 }
 
-def to_millis(date_obj, end=False):
-    if end:
-        dt = datetime.combine(date_obj, datetime.max.time())
-    else:
-        dt = datetime.combine(date_obj, datetime.min.time())
-    return int(dt.timestamp() * 1000)
-
-if st.button("📡 Consultar"):
-    if data_inicio > data_fim:
-        st.error("Data início maior que data fim")
-        st.stop()
-
-    params = {
-        "startDate": to_millis(data_inicio),
-        "endDate": to_millis(data_fim),
-        "size": 1000,           # evita paginação inicial
-        "adjustment": "true"    # padrão usado no swagger
-    }
-
-    st.write("📤 Params:", params)
+if st.button("Testar endpoint"):
+    st.write("Fazendo request...")
 
     try:
-        response = requests.get(
-            BASE_URL,
-            headers=headers,
-            params=params,
-            timeout=30
-        )
+        # Fazendo request GET
+        response = requests.get(url, headers=headers, timeout=20)
     except Exception as e:
         st.error(e)
         st.stop()
 
-    st.write("📊 Status:", response.status_code)
-    st.write("🔗 URL:", response.url)
-
-    if response.status_code == 200:
-        st.success("✔ Dados retornados")
-        st.json(response.json())
-    else:
-        st.error("Erro na requisição")
-        st.code(response.text)
+    st.write("Status:", response.status_code)
+    st.write("Headers:", dict(response.headers))
+    st.code(response.text if response.text else "(resposta vazia)")
